@@ -1,0 +1,248 @@
+---
+title: "Meeting 1"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(error=TRUE)
+```
+
+To start a notebook, select File, New File, R Notebook
+To insert a "code block", press the "Insert" button above this window.
+
+```{r}
+2 + 2
+```
+Here R carries out the action of adding 2 + 2. The result is "returned", which in this case means just printing it to the screen
+
+## Variables and basic data types
+
+Assignment (setting a variable refer to a value)
+```{r}
+a <- 5
+```
+The action of assignment doesn't return any result. 
+
+The variable remains in the environment, so you can use it again:
+```{r}
+a + 3
+```
+Other mathematical operators:
+
+- Multiplication
+```{r}
+5 * 5
+```
+- Division
+```{r}
+10 / 5
+```
+- Powers
+```{r}
+10 ^ 2
+```
+
+Don't forget that if you change something in one chunk of R code you have to re-run every other block afterwards that refers to it (look at the options in the "Run" button above).
+
+Assignment can also be done with "=":
+```{r}
+a = 99
+```
+But n.b. logical comparision "==" (i.e. a test that something "is the same as" something else):
+```{r}
+a == 1
+```
+
+```{r}
+a == 99
+```
+
+**Careful not to mix up "=" and "=="!** This is a frequent source of unexpected behaviour (also known as "bugs") in programmes.
+
+Numerals are one type of entity R knows about. 
+Strings (or "characters") are another type of entity.
+
+```{r}
+lang <- "Arabic"
+lang
+```
+Try this yourself 
+```{r}
+a + lang
+```
+
+Note `lang` is a variable name, so you write it directly into the console/your script. A string is marked with inverted commas, e.g. "English".
+```{r}
+lang
+Michaels_native_language
+```
+```{r}
+Michaels_native_language <- "English"
+Michaels_native_language
+```
+Entering a string, like a numeral, returns itself
+```{r}
+"A string"
+```
+
+Numbers can be strings, but only in quotes
+```{r}
+a <- "99"
+a
+```
+You still can't add numerals to characters.
+```{r}
+a + 1
+```
+You also can't use "+" with two strings. The mathematic operators are only defined for actions with numerals:
+```{r}
+lang + a
+```
+
+## Variable names
+
+Legal variable names have the letters a-z (upper and lowercase are different), as well as `_` and `.`
+
+```{r}
+apple <- TRUE
+Apple <- FALSE
+```
+These are two different variables
+```{r}
+apple
+```
+```{r}
+Apple
+```
+```{r}
+# The following won't work.
+Michaels_native_language <- English
+# The word English here has no quotes, so R understands it to be intended 
+# as a variable name. But this variable doesn't exist (yet)
+```
+```{r}
+Michaels_native_language <- "English"
+Michaels_native_language
+```
+Meaningful variable names are good, but the variable name shouldn't be an actual value, bbecause this could be confusing:
+```{r}
+English <- "Russian"
+Michaels_native_language <- English
+Michaels_native_language
+```
+## Vectors
+
+A *vector* is an ordered group of values of the same type (you might want to call this a "list", but techically, in R, a list is something else):
+
+To make a vector you use a function *c*
+
+Functions have the format e.g. *c()*, so a vector made of 1, 2, and 3 look like this:
+```{r}
+c(1, 2, 3)
+```
+A vector of strings is made the same way:
+```{r}
+c("Arabic", "Swedish")
+```
+The built-in variable *month.name* is also a vector of strings
+```{r}
+month.name
+```
+You can refer to items in a vector by their index number:
+```{r}
+# n.b. square brackets for index!
+month.name[11] 
+# i.e. the 11th item in the month.name vector
+```
+You can put variables into a vector:
+```{r}
+a <- 20
+b <- 19
+c(a, b, b, a)
+```
+This is different from e.g.
+```{r}
+c("a", "b", "b", "a")
+```
+You can't have mixed types in a vector:
+```{r}
+c(10, "a word")
+```
+Very very unfortunately, some early programmer decided the best thing to do here was not to raise an error, but to silently change the numeral into a string.
+
+Use vectors as indexes to select part of a vector:
+```{r}
+summer <- c(12, 1, 2)
+month.name[summer]
+```
+Shorthand for making sequential vectors (of numerals)
+```{r}
+1:10
+```
+Operations on vectors act on all members of the vector:
+```{r}
+my_seq <- 1:5
+5 * my_seq
+```
+Operations with two vectors work item by item:
+```{r}
+my_seq + c(2,3,9,0,1)
+```
+Fails if the length doesn't match
+```{r}
+my_seq + c(2,3,9,0)
+```
+**Unless** one is an even multiple of the other, then is just repeats the shorter one to match:
+```{r}
+a <- 1:6
+b <- c(0,1)
+a + b
+```
+
+This is a horrible design decision made by somebody decades ago. It must have seemed like a good idea at the time.
+
+## Variable names
+
+Legal variable names
+
+1. Start with a character a-z, A-Z (case sensitive!)
+2. Contain any number of further characters, numerals, or "." or "_"
+
+Some legal variable names:
+```
+a
+a1
+a.1
+a_1
+aa
+my.seq.1
+my_seq_1
+mySeq1
+```
+## Matrix
+
+Like a vector, but in two dimensions (still all the same type)
+
+## Data frame
+
+For tabular data, like in a spreadsheet
+
+- a table with multiple rows and columns
+- every column has a single type
+
+```{r}
+participant.code <- c("a", "b", "c", "d")
+sex <- c("f", "m", "f", "f")
+age <- c(24, 24, 28, 27)
+my.exp <- data.frame(participant.code, sex, age)
+my.exp
+```
+You can refer to the columns using "$":
+```{r}
+my.exp$age
+```
+You can assign new columns:
+```{r}
+my.exp$index.number <- 1:4
+my.exp
+```

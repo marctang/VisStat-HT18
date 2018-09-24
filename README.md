@@ -2,6 +2,6 @@ Materials for the PhD course *Visualisation and Statistical Analysis* held in th
 
 Week 1 (2018-09-24)
 
-- [Slides](01-introduction/01.introduction-slides.html)
+- [Slides](01-introduction/01.introduction-slides.html) (from your browswer, press key 'f' for fullscreen, 'w' for wide format)
 - [Homework](01-introduction/01.introduction-homework.html)
 - [Reading: Wilson et al. 2017](01-introduction/Wilson_etAl_2017_Good_enough_practices.pdf)

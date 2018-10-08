@@ -17,3 +17,7 @@ For homework,
   1. Wrangling the Kelly data from Språkbanken — try to read this data into R after exporting it from excel. It'll require some manual fiddling
   2. Writing a more complex function with lots of potential arguments
 - Next week we start doing something interesting with the Kelly data
+
+## Week 3 (2018-10-08) Data Structures and plotting
+
+- Michael’s [tidied-up version of the Kelly data](03-data-structures/Swedish-Kelly_M3_CEFR.tsv) (tab separated values, use `read_tsv`) 

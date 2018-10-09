@@ -21,3 +21,5 @@ For homework,
 ## Week 3 (2018-10-08) Data Structures and plotting
 
 - Michael’s [tidied-up version of the Kelly data](03-data-structures/Swedish-Kelly_M3_CEFR.tsv) (tab separated values, use `read_tsv`) 
+- The [homework](03-data-structures/03.homework.pdf)
+

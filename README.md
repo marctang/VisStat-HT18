@@ -22,7 +22,7 @@ For homework,
 
 - Michael’s [tidied-up version of the Kelly data](03-data-structures/Swedish-Kelly_M3_CEFR.tsv) (tab separated values, use `read_tsv`) 
 - The [homework](03-data-structures/03.homework.pdf)
-- The [notes](03-data-structures/03.data-structures.nb.html) from class (also in [markdown format](03-data-structures/03.data-structures.Rmd)
+- The notes from class in [html](03-data-structures/03.data-structures.nb.html) and [markdown](03-data-structures/03.data-structures.Rmd) format
 
 ## Week 4 (2018-10-15) Data wrangling
 

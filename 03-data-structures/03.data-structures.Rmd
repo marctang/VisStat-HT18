@@ -1,0 +1,338 @@
+---
+title: "Visualisation and statistical analysis"
+author: "Michael Dunn, Dept. of Linguistics and Philology, Uppsala University"
+date: "Session 3, 2018-10-08"
+output: html_notebook
+---
+
+```{r echo=FALSE}
+options(scipen=999) # disable scientific notation (i.e. 1000 == 1e04)
+```
+
+Topics
+
+- Homework
+  * writing a function
+  * importing the Kelly data
+- Getting the parts of your data you are interested in:
+  * filter()
+  * select()
+- Sorting, renaming, and mutating (adding)
+- Plotting simple tabular data
+- Distributions and histograms
+  * rnorm
+  * runif
+- log values
+- Zipf distribution
+
+## House buying
+
+```{r}
+a <- 1
+b <- NA
+is.na(a)
+is.na(b)
+```
+
+
+```{r}
+monthly.cost <- function(cost, 
+                         fee, 
+                         operating=NA, 
+                         deposit=NA, 
+                         interest=0.017, 
+                         amortization=0.02,
+                         n.residents=2){
+  if (is.na(deposit)){ deposit <- cost * 0.15}
+  if (is.na(operating)) {operating <- 300 * n.residents}
+  loan <- cost - deposit
+  interest <- (loan * (interest + amortization)) / 12
+  interest + fee + operating
+}
+
+monthly.cost(4490000, 4695, 17400/12)
+monthly.cost(2970000, 3210)
+```
+
+# Tidyverse vs. base R
+
+- The read_csv is the tidyverse version of read.csv. 
+- We're working in the tidyverse `library(tidyverse)` at the beginning of every script!
+
+```{r}
+# Base R
+
+m <- matrix(1:9, nrow=3)
+m # a matrix
+```
+```{r}
+m[1,1] # a cell
+```
+```{r}
+m[1,] # a vector
+```
+
+## Preliminaries
+
+- Please install the `babynames` package. All loading this package does is give you one big tibble called `babynames` with some interesting sample data for us to play with
+- To install the package use RStudio "Tools" -> "Install packages..."
+
+It's good style to do all your library function calls at the beginning of your scripts, notebooks, etc. For example, tidyverse redefines `filter`, and you don't want `filter` to mean one thing for one half of your script and something else for the other. It also means that if you cut-and-paste something you know where to look for any libraries it might depend on.
+```{r}
+library(tidyverse)
+library(babynames) 
+```
+- loading babynames gives you access to a huge tibble (table of text and numerical data) called `babynames`
+- You can enter `help(babynames)` in the console to get a description of the data (SSA is the US Social Security Administration). Next week we'll look at Swedish names instead!
+
+Long data: every observation is its own row. Next week we'll look at Swedish name data from Statistiska Centralbyrån, which is in "wide" format (multiple observations per row)
+```{r}
+head(babynames)
+```
+
+## First steps with dplyr (part of tidyverse)
+
+Dplyr aims to provide a function for each basic verb of data manipulation. These include:
+
+    - filter() to select cases based on their values.
+    - arrange() to reorder the cases.
+    - select() and rename() to select variables based on their names.
+    - mutate() and transmute() to add new variables that are functions of existing variables.
+
+The dplyr verbs: filter, select:
+
+Filtering rows:
+```{r}
+# the filter function is aware of the names of the columns in the table
+filter(babynames, name=="Michael", sex=="F")
+```
+```{r}
+filter(babynames, name=="Lena", year==2000)
+```
+Use | for "or"
+```{r}
+filter(babynames, name=="Rima" | name=="Maja", year > 1959, year < 1966)
+```
+
+- `filter(a, b)` is the same as the "and" relationship `filter(a & b)`; cf. "or" `filter(a | b)`
+
+```{r}
+filter(babynames, name=="Xavier" | name =="Anastasia")
+```
+
+Selecting columns:
+```{r}
+select(babynames, year, name, n)
+```
+
+## Piping %>%
+
+`funct(a, b)` is the same as `a %>% funct(b)`
+
+```{r}
+babynames %>% filter(name=="Lena", year==2000)
+```
+
+This can simplify things:
+
+```{r}
+babynames %>% filter(name=="Michael") %>% filter(year <= 1900) %>% filter(sex=="F")
+```
+
+http://r4ds.had.co.nz/pipes.html
+
+Functions are verbs, arguments are nouns
+
+How to deal with multiple steps of an analysis
+
+- save intermediate steps (clutters the namespace, lots of memory)
+
+```{r}
+michael0 <- filter(babynames, name=="Michael")
+michael1 <- select(michael0, name, n, year)
+```
+- overwrite the original (hard to debug)
+```{r}
+michael <- filter(babynames, name=="Michael")
+michael <- select(michael, name, n, year)
+```
+- nested functions (have to read in inside-out order, arguments are spread out)
+```{r}
+michael <- select(
+  filter(babynames, name=="Michael"), 
+  name, n, year
+)
+```
+
+- the pipe syntax (the human way!)
+```{r}
+babynames %>% filter(name=="Michael")
+# SAME AS filter(babynames, name=="Michael")
+```
+
+- piped functions can be chained together: 
+```{r}
+babynames %>% filter(name=="Michael") %>% select(year, sex, name) # %>% some_plot_function()
+
+```
+Works best 
+
+- with one input, one output
+- not too many steps (<10)
+- Notice the return value of the pipe: `a %>% b` "sends" a to b, and then the statement returns something, which can be sent along to the next thing `a %>% b %>% c`
+- The thing that you're piping in is the first, default argument of the function. Tidyverse functions mark this in the help files with a leading dot, e.g. `.data` in `help(filter)`
+- Chaining pipes together
+
+- **TODO** Class time to experiment
+
+### Assigning piped data
+
+The final results of pipes can be assigned to variables as normal of course
+```{r}
+michael <- babynames %>% filter(name=="Michael")
+```
+
+There's also a right arrow `->` version of the assignment operator `<-`
+```{r}
+x <- 4
+# is the same as 
+4 -> x
+```
+- This is convenient on the console sometimes, when you want to reuse something from your history and assign it to a variable
+- It's generally discouraged otherwise
+- But it does make nice logical sense with pipe-sequences
+
+```{r}
+#michael <- babynames %>% filter(name=="Michael")
+babynames %>% filter(name=="Michael") -> michael
+michael
+```
+```
+data %>% a() %>% b() -> result
+```
+  Compare the "normal" way:
+```
+result <- data %>% a() %>% b()
+```
+### sorting columns with arrange
+
+`desc` means descending
+
+```{r}
+# When was "Xavier" popular?
+babynames %>% filter(name=="Xavier") %>% arrange(desc(n))
+```
+
+### Renaming columns
+```{r}
+# rename
+michael %>% rename(popularity=prop)
+
+# select with rename
+michael %>% select(name, gender=sex)
+```
+
+### mutate() adds columns
+```{r}
+babynames %>% mutate(log_n=log10(n)) %>% select(year, sex, name, log_n)
+```
+```{r}
+# Remember the syntax for making a vector 1 to 10:
+1:10
+# Use this to add a "rank" column
+michael %>% mutate(rank=1:nrow(michael))
+
+#NOTE more effecient, robust way to do this:
+michael %>% mutate(rank=1:nrow(.))
+# this is better because you could substitute the tabular data "michael" with another table with different length and it would still work
+```
+
+Dot "." stands for "the thing that you're piping in" (for cases when it's not the first argument)
+```{r}
+rnorm(100) %>% tibble(id=1:100, n=.)
+```
+
+cf. also `.data` in docs (see e.g. `help(filter)`)
+
+## ggplot
+
+- Calling the function `ggplot` starts assembling the graph; it has the default argument `data`, which you can pipe to the function
+- the `aes()` ("aesthetic") function maps data onto graph attributes
+- You build up the plot in layers using `+`
+- geometic layers have names starting with `geom_`. These include `geom_point` (scatterplots), `geom_box` (boxplots), `geom_histogram` (histograms)`, and may others. There is a default set that it part of tidyverse, and then others can be added by calling libraries.
+- There are lots more things you can change, but these three steps are the basic idea: take data, map to an aesthetic, and plot as a geometric layer
+
+```{r}
+# geom_point()
+babynames %>% filter(name=="Maria", sex=="F") %>% ggplot(aes(x=year, y=prop)) + geom_point() + geom_line()
+# geom_col()
+# geom_line()
+```
+Numbers like 1.5e-05 are scientific notation, shorthand for "1.5 times 10 to the power of -5", which means 0.000015
+
+To disable this, use the following at the start of your notebook:
+```{r}
+options(scipen=999) # disable scientific notation (i.e. 1000 == 1e04)
+```
+
+**Preview** (we will look at this next week): you can specify other elements of the plot aesthetic to be determined by values in your data. Let's just use colour for now:
+
+```{r}
+babynames %>% filter(name=="Leslie") %>% ggplot(aes(x=year, y=prop, colour=sex)) + geom_line()
+```
+```{r}
+# babynames %>% filter(name=="Maria") %>% mutate(log_n=log10(n)) %>% ggplot(aes(x=year, y=log_n, colour=sex)) + geom_line()
+babynames %>% filter(name=="Maria")  %>% ggplot(aes(x=year, y=log10(n), colour=sex)) + geom_line()
+```
+
+```{r}
+babynames %>% filter(name=="Maria")  %>% ggplot(aes(x=year, y=log10(n), colour=sex)) + geom_col()
+```
+
+# Some statistical distributions
+
+## Normal distribution
+
+Galton Board
+
+<iframe width="854" height="480" src="https://www.youtube.com/embed/4HpvBZnHOVI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+In a normal distribution:
+- 68.2% of values within one standard deviation
+- 95.4% within two standard deviations
+- 99.7% within 3
+- 99.99% within 4
+
+![Standard deviations](Standard_deviation_diagram.svg.png)
+
+Normal distributions can be described by two parameters, mean and standard deviation. The `rnorm()` function generates vectors of random numbers accordingn to a normal distribution.
+
+**TODO** Read the help for the `rnorm()` function. Generate some vectors of normally distributed random numbers given different means and standard deviations.
+
+## Histogram
+
+- rnorm(N, mean, sd)
+
+Here's how you can visualise these:
+```{r warning=FALSE}
+library(tidyverse) # should do this at the beginning
+my.data <- tibble(values=rnorm(100, 10, 2.5))
+my.data %>% ggplot(aes(x=values)) + geom_histogram(binwidth=1)
+```
+
+A small sample will be jagged, but the larger the sample the smoother it gets:
+```{r}
+tibble(values=rnorm(10000, 10, 2.5)) %>% ggplot(aes(x=values)) + geom_histogram(binwidth=1)
+```
+
+## Uniform distribution
+There are many kinds of distributions.
+
+- runif(N, min, max)
+
+In the *Uniform distribution* there is an equal chance of getting any value between the minimum and the maximum
+```{r}
+my.data <- tibble(values=runif(1000, min=5, max=9))
+#qplot(values, data=my.data, geom="histogram", breaks=1:10)
+my.data %>% ggplot(aes(x=values)) + geom_histogram(breaks=1:10)
+```

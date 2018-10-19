@@ -1,0 +1,380 @@
+---
+title: "Visualisation and statistical analysis"
+author: "Michael Dunn, Dept. of Linguistics and Philology, Uppsala University"
+date: "Session 4, 2018-10-18"
+output: html_notebook
+---
+
+Main issues for today
+
+- wide vs long data
+- fixing data type: as.numeric, as.character
+- readxl package
+- rbind
+- testthat package
+- gather and spread
+
+# Some homework revision
+
+```{r}
+library(tidyverse)
+library(babynames)
+```
+
+Kelly visualisation:
+```{r}
+read_tsv("./Swedish-Kelly_M3_CEFR.tsv") %>%
+  arrange(desc(`Raw freq`)) %>%
+  filter(!is.na(`Raw freq`)) %>%
+  filter(WPM != 1000000) %>%
+  mutate(Rank=1:length(ID)) %>%
+  ggplot(aes(x=log(Rank), y=log(`Raw freq`))) + geom_line()
+```
+
+Another version of the same thing, less "idiomatic" tidyverse (old-fashioned way)
+```{r}
+kelly <- read_tsv("Swedish-Kelly_M3_CEFR.tsv")
+kelly <- filter(kelly, !(is.na(`Raw freq`) | WPM == 1000000))
+kelly$rank <- 1:nrow(kelly)
+kelly %>% ggplot(aes(rank, `Raw freq`)) + geom_line()
+```
+
+Now plot this again taking the log values of rank and frequency
+```{r}
+read_tsv("Swedish-Kelly_M3_CEFR.tsv") %>% 
+  filter(!(is.na(`Raw freq`) | WPM == 1000000)) %>% 
+  mutate(rank=1:nrow(.)) %>% 
+  ggplot(aes(log10(rank), log10(`Raw freq`))) + geom_line()
+```
+
+What's that "blip"? How can we fix it?
+```{r}
+# Sort it by Raw freq, descending
+kelly %>% arrange(desc(`Raw freq`))
+```
+And then redo everything with the fix incorporated
+
+```{r}
+read_tsv("Swedish-Kelly_M3_CEFR.tsv") %>%
+  arrange(desc(`Raw freq`)) %>%
+  filter(!(is.na(`Raw freq`) | WPM == 1000000)) %>% 
+  mutate(rank=1:nrow(.)) %>% 
+  ggplot(aes(log10(rank), log10(`Raw freq`))) + geom_line()
+```
+
+
+# Wide and long data
+
+Wide data:
+
+![](./wide-data-example.png)
+
+Long data:
+
+```{r}
+head(babynames)
+```
+
+- Long data is good for visual analysis: every row is an observation
+- Humans generally prefer to *read* wide data
+- There are times when wide data is important
+- `gather` changes wide to long
+- `spread` changes long to wide
+
+![Wide vs. long](./wide-long.png)
+
+Wide format
+```{r}
+data <- tibble(row=c("A", "B"), x=1:2, y=3:4, z=5:6)
+data
+```
+
+Long format
+```{r}
+data %>% gather("column", "value", c("x", "y", "z"))
+```
+
+
+# Loading data directly from excel format
+
+(this is relatively new, I didn't know about it earlier)
+
+These excel files are from the Swedish [Central Statistics Agency, SCB](http://www.scb.se/hitta-statistik/statistik-efter-amne/befolkning/amnesovergripande-statistik/namnstatistik/)
+
+Look at the spreadsheet and the read_excel documentation
+- named sheets (we need to select a particular sheet)
+- blank lines at beginning (`skip` them)
+- column types (can you see what they are?)
+
+```{r}
+library(readxl)
+girls <- read_excel("be0001namntab11_2017.xlsx", sheet = "Flickor", skip = 4)
+boys <- read_excel("be0001namntab12_2017.xlsx", sheet = "Pojkar", skip = 4)
+head(girls)
+```
+
+Check the column titles:
+```{r}
+names(girls)
+names(boys)
+```
+
+We want to check that the column names of `girls` and `boys` are the same. You can just do one of the following:
+```{r}
+names(girls) == names(boys) # expect a long vector of TRUEs
+```
+You can also do:
+```{r}
+all(names(girls) == names(boys)) # returns TRUE if all the values in the vector are TRUE
+```
+But a more elegant way to do it is to incorporate *tests*. The `testthat` package introduces a bunch of `expect_` functions that make your script crash (infomatively!) if the expectation is violated.
+```{r}
+library(testthat)
+expect_equal(names(girls), names(boys))
+```
+The test does *nothing* if it passes. You can incorporate tests into your scripts to make sure nothing unexpected is happening after e.g. you update data.
+```{r}
+a <- 1:5
+b <- 1:4
+expect_equal(a, b)
+```
+
+Assuming things work as expected you can add a column to specify male or female name, and then bind your tables together into a single table.
+```{r}
+library(tidyverse)
+girls <- girls %>% mutate(sex = "F")
+boys <- boys %>% mutate(sex = "M")
+data <- rbind(girls, boys)
+```
+Now take a look:
+```{r}
+head(data)
+```
+
+# Convert swedish babynames from wide to long
+
+Back to Swedish baby names. In order to work with this we need to convert it from wide to long format: there should be a single `year` column with year column headers as variables. 
+
+# Gathering
+
+**This is very important!**
+
+* gather(.data, new_column_with_collected_headers, new_column_for_values_of_cells, ...all_the_columns_to_gather...)
+
+The following function all the year columns into one column with year (the old column header), and one column with the value of the cell.
+
+We use `as.character` because this refers to the column headers, which count as text. If we used numerals what would it mean?
+
+```{r}
+long.data <- gather(data, year, count, as.character(1998:2017)) 
+head(long.data)
+```
+
+Note that the year and count columns are shown as <chr> (character) rather than <dbl> (a numeric type). You won't be able to graph these until you fix them.
+The count data is character rather than numeric; fix this with mutate
+
+```{r}
+long.data <- gather(data, year, count, as.character(1998:2017)) %>% 
+  mutate(year=as.numeric(year), count=as.numeric(count))
+head(long.data)
+```
+
+Now ggplot recognises the numbers as numeric rather than as character strings it can plot them:
+
+```{r}
+long.data %>% filter(Namn=="Michael") %>% ggplot(aes(x=year, y=count)) + geom_line()
+```
+
+```{r}
+long.data %>% filter(Namn=="Linnéa") %>% ggplot(aes(x=year, y=count)) + geom_line()
+```
+
+```{r}
+long.data %>% filter(Namn=="Linnéa" | Namn=="Anna" | Namn=="Robert") %>% ggplot(aes(x=year, y=count, linetype=Namn)) + geom_line()
+```
+
+# Fixing ("coercing") character types
+
+Look again at `head(data)`. All the numbers have been imported at characters. Can you guess why?
+
+This is a problem:
+```{r}
+values <- c("1", "7", "8?", "-", "not applicable")
+values
+# You can't do mathematical operations with the character representations of numbers
+# values + 1
+```
+Use `as.numeric` to coerce the type of an object to numeric. Anything that can't be coerced turns into NA (not available)
+```{r}
+numeric.values <- as.numeric(values)
+numeric.values # note NA for "not available"; the warning message
+numeric.values + 1
+```
+
+You can do this the other way around too, with `as.character` (like we did in the gather example above)
+
+There are other `as.XXX` functions for every other type of object, but you're less likely to need these.
+
+### summarise() and group_by()
+
+Reduces all the rows to *one* row
+```{r}
+babynames %>% summarise(mean_n=mean(n), median_n=median(n))
+```
+
+`group_by` reduces all the rows to a smaller number of rows, according to the `group_by` term/s; summarise then works on each *group* (`group_by` doesn't make much sense without a `summarise` or similar after it)
+
+```{r}
+# group_by sex
+babynames %>% filter(name=="Michael") %>% group_by(sex) %>% summarise(first_seen=min(year), last_seen=max(year))
+```
+
+
+```{r}
+our_names = c("Anna", "Bror-Magnus", "Lena", "Linnéa", "Maja", "Marc", "Mervi", "Rima", "Robert", "Rune", "Michael")
+babynames %>% filter(name %in% our_names) %>% group_by(name) %>% summarise(total=sum(n))
+```
+
+Exercise: what are the mean and median number of male and female names in the data?
+
+You can group by multiple things at once to get every combination
+```{r}
+babynames %>% 
+  filter(name %in% c("Michael", "Magnus", "Anna", "Maja")) %>% 
+  group_by(name, sex) %>% # every combination of name and sex
+  summarise(total=sum(n)) 
+```
+
+## Spread example
+
+Here's a chance to use `spread`. Let's say we want to look at the *ratio* of male to female version of each of these names:
+
+```{r}
+babynames %>% 
+  filter(name %in% c("Michael", "Magnus", "Anna", "Maja")) %>% 
+  group_by(name, sex) %>% # every combination of name and sex
+  summarise(total=sum(n)) %>% 
+  spread(sex, total)
+```
+
+We could convert this in a manliness rating for names:
+
+```{r}
+babynames %>% 
+  filter(name %in% c("Michael", "Magnus", "Anna", "Maja")) %>% 
+  group_by(name, sex) %>% # every combination of name and sex
+  summarise(total=sum(n)) %>% 
+  spread(sex, total) %>% 
+  mutate(manliness=M/(M+F))
+```
+Oops, have to change the NAs to 0, because anything + NA is NA
+
+```{r}
+babynames %>% 
+  filter(name %in% c("Michael", "Magnus", "Anna", "Maja")) %>% 
+  group_by(name, sex) %>% # every combination of name and sex
+  summarise(count=sum(n)) %>%  
+  spread(sex, count) -> data
+# writing an intermediate variable is a clunky way to do it, but I'm not too proud
+data$F[is.na(data$F)] <- 0
+data$M[is.na(data$M)] <- 0
+data %>% 
+  mutate(manliness=M/(M+F)) %>% 
+  arrange(desc(manliness))
+```
+## an aside on indexing
+
+```{r}
+values <- c(3,6,17, NA, NA, 5)
+values
+```
+```{r}
+is.na(values)
+```
+Indexes in square brackets
+```{r}
+values[2]
+values[2:4]
+```
+Assign to indexed vectors
+```{r}
+values[1:2] <- -99
+values
+```
+```{r}
+values[is.na(values)] <- 0
+values
+```
+Other kinds of logic also possible
+```{r}
+values[values < 0] <- NA
+values
+```
+
+### Histogram
+
+```{r}
+babynames %>% filter(year==2000) %>% ggplot(aes(x=log10(n))) + geom_histogram()
+```
+
+
+
+## stringr 
+
+Simple character manipulations, see documentation: https://stringr.tidyverse.org/articles/stringr.html
+
+- Look at the cheatsheet, from https://github.com/rstudio/cheatsheets/
+- The **Data transformation** and **R Markdown** cheatsheets are good too 
+
+```{r}
+library(stringr) # you might need to load this separately (or it might be part of tidyverse)
+# str_sub(x, start, stop)
+our_names = c("Anna", "Bror-Magnus", "Lena", "Linnéa", "Maja", "Marc", "Mervi", "Rima", "Robert", "Rune")
+str_sub(our_names, 1, 2)
+# positive and negative indices
+str_sub(our_names, 1, 1)
+str_sub(our_names, -3, -1) %>% str_to_upper()
+```
+
+- We can do lots of interesting things with this by adding the output of this to a new column using `mutate`
+
+Exercises:
+
+Try one of:
+  - add a column called `final_a` with TRUE or FALSE values for whether the name has a final *a*
+  - add a column for `first_letter`
+- explore this variable (e.g. interaction with sex, change over time)
+
+# Trends in a-final names
+
+```{r}
+babynames %>% mutate(final_a=str_sub(name, start=-1)=="a")
+```
+We could e.g. graph this, with sex as a variable:
+```{r}
+babynames %>% 
+  mutate(final_a=str_sub(name, start=-1)=="a") %>% 
+  group_by(year, sex, final_a) %>% 
+  summarise(count=n()) %>% 
+  ggplot(aes(x=year, y=count, colour=sex, linetype=final_a)) + geom_line()
+```
+But this really only makes sense as proportions:
+```{r}
+babynames %>% 
+  mutate(final_a=str_sub(name, start=-1)=="a") %>% 
+  group_by(year, sex, final_a) %>% 
+  summarise(count=n()) %>% 
+  spread(final_a, count) %>% 
+  rename(no_final_a=`FALSE`, final_a=`TRUE`) %>% 
+  mutate(prop=final_a/(final_a+no_final_a)) %>% 
+  ggplot(aes(x=year, y=prop, colour=sex)) + geom_line()
+```
+
+Some ideas for further exercises
+
+- What's happened to "Leslie"? Plot the change in male and female Leslies over time
+- Can you order names by what year they peak?
+- Can you work out a way to find more names which have changed their typical gender over time?
+- Has the proportion of vowel final names (consider girls and boys separately) changed over time?
+- What is the male-female bias in initial letters?
+- How many distinct names are used for boys and girls each year? What about a better measure (e.g. number of names/number of individuals)

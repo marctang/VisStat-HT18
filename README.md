@@ -33,5 +33,11 @@ For homework,
 - The [notes](05.visualisation/05.notes.nb.html) from class  and the [introduction to GREP](05.visualisation/05.grep-slides.html) slides
 - I have set some [homework](05.visualisation/05.homework.pdf) after all. You will also need the following data: [numeral-frequency.tsv](05.visualisation/numeral-frequency.tsv). Please email this to me by Sunday evening.
 
+## Week 6 (2018-10-29)
+
+- Deriving summary statistics
+- Plotting homework review
+
+The notes are available [06.same-or.different/06.notes.nb.html]
 
 

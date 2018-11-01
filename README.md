@@ -38,6 +38,6 @@ For homework,
 - Deriving summary statistics
 - Plotting homework review
 
-The notes are available [06.same-or.different/06.notes.nb.html]
+The notes are available [06.same-or-different/06.notes.nb.html]
 
 

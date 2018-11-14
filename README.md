@@ -42,6 +42,8 @@ The notes are available in [html](06.same-or-different/06.notes.nb.html)
 
 ## Week 7 (2018-11-05)
 
+The [notes](07.similarity/07.notes.nb.html) from class
+
 Data for class exercise
 - [wals_data.tsv](07.similarity/wals_data.tsv) 
 - [distance.RData](07.similarity/distance.RData)

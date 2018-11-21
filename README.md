@@ -48,3 +48,6 @@ Data for class exercise
 - [wals_data.tsv](07.similarity/wals_data.tsv) 
 - [distance.RData](07.similarity/distance.RData)
 
+## Week 8 (2018-11-12)
+
+The [notes](08.geography/08.notes.nb.html) from class

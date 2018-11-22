@@ -33,5 +33,21 @@ For homework,
 - The [notes](05.visualisation/05.notes.nb.html) from class  and the [introduction to GREP](05.visualisation/05.grep-slides.html) slides
 - I have set some [homework](05.visualisation/05.homework.pdf) after all. You will also need the following data: [numeral-frequency.tsv](05.visualisation/numeral-frequency.tsv). Please email this to me by Sunday evening.
 
+## Week 6 (2018-10-29)
 
+- Deriving summary statistics
+- Plotting homework review
 
+The notes are available in [html](06.same-or-different/06.notes.nb.html)
+
+## Week 7 (2018-11-05)
+
+The [notes](07.similarity/07.notes.nb.html) from class
+
+Data for class exercise
+- [wals_data.tsv](07.similarity/wals_data.tsv) 
+- [distance.RData](07.similarity/distance.RData)
+
+## Week 8 (2018-11-12)
+
+The [notes](08.geography/08.notes.nb.html) from class
